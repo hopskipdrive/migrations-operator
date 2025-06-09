@@ -306,7 +306,6 @@ var _ = Describe("InitInjector", func() {
 
 		c.EventuallyGetName("testing", pod)
 		spec := pod.UnstructuredContent()["spec"].(map[string]interface{})
-		println(spec)
 		initContainers := spec["initContainers"].([]interface{})
 		sidecar := initContainers[0].(map[string]interface{})
 		Expect(sidecar["restartPolicy"]).To(Equal("Always"))

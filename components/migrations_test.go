@@ -28,6 +28,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
 	migrationsv1beta1 "github.com/coderanger/migrations-operator/api/v1beta1"
@@ -379,5 +381,43 @@ var _ = Describe("Migrations component", func() {
 		helper.MustReconcile()
 		helper.TestClient.GetName("testing-migrations", job)
 		Expect(job.Spec.Template.Spec.Containers[0].Image).To(Equal("myapp:v1"))
+	})
+
+	It("doesn't remove restartPolicy from init containers", func() {
+		upod := &unstructured.Unstructured{}
+		upod.SetGroupVersionKind(schema.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"})
+		upod.SetName(pod.GetName())
+		upod.SetNamespace(pod.GetNamespace())
+		upod.UnstructuredContent()["spec"] = map[string][]map[string]string{
+			"containers": {
+				{
+					"name":  "main",
+					"image": "fake",
+				},
+			},
+			"initContainers": {
+				{
+					"name":          "sidecar",
+					"image":         "fake",
+					"restartPolicy": "Always",
+				},
+			},
+		}
+
+		helper.TestClient.Create(upod)
+		helper.MustReconcile()
+		Expect(helper.Events).To(Receive(Equal("Normal MigrationsStarted Started migration job default/testing-migrations using image myapp:latest")))
+		Expect(obj).To(HaveCondition("MigrationsReady").WithReason("MigrationsRunning").WithStatus("False"))
+
+		ujob := &unstructured.Unstructured{}
+		ujob.SetGroupVersionKind(schema.GroupVersionKind{Group: "batch", Version: "v1", Kind: "Job"})
+		helper.TestClient.GetName("testing-migrations", ujob)
+		spec := ujob.UnstructuredContent()["spec"].(map[string]interface{})
+		template := spec["template"].(map[string]interface{})
+		tSpec := template["spec"].(map[string]interface{})
+		initContainers := tSpec["initContainers"].([]map[string]interface{})
+		containers := tSpec["containers"].([]map[string]interface{})
+		Expect(containers[0]["name"]).To(Equal("migrations"))
+		Expect(initContainers[0]["restartPolicy"]).To(Equal("Always"))
 	})
 })
