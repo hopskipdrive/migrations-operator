@@ -210,10 +210,13 @@ func (comp *migrationsComponent) Reconcile(ctx *cu.Context) (cu.Result, error) {
 
 	// Purge any migration wait initContainers since that would be a yodawg situation.
 	initContainers := []map[string]interface{}{}
-	for _, c := range migrationPodSpec["initContainers"].([]interface{}) {
-		container := c.(map[string]interface{})
-		if !strings.HasPrefix(container["name"].(string), "migrate-wait-") {
-			initContainers = append(initContainers, container)
+	migrationInitContainers := migrationPodSpec["initContainers"].([]interface{})
+	if migrationInitContainers != nil {
+		for _, c := range migrationInitContainers {
+			container := c.(map[string]interface{})
+			if !strings.HasPrefix(container["name"].(string), "migrate-wait-") {
+				initContainers = append(initContainers, container)
+			}
 		}
 	}
 	migrationPodSpec["initContainers"] = initContainers
