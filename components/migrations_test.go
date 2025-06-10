@@ -406,7 +406,7 @@ var _ = Describe("Migrations component", func() {
 
 		helper.TestClient.Create(upod)
 		helper.MustReconcile()
-		Expect(helper.Events).To(Receive(Equal("Normal MigrationsStarted Started migration job default/testing-migrations using image myapp:latest")))
+		Expect(helper.Events).To(Receive(Equal("Normal MigrationsStarted Started migration job default/testing-migrations using image fake")))
 		Expect(obj).To(HaveCondition("MigrationsReady").WithReason("MigrationsRunning").WithStatus("False"))
 
 		ujob := &unstructured.Unstructured{}
@@ -415,9 +415,11 @@ var _ = Describe("Migrations component", func() {
 		spec := ujob.UnstructuredContent()["spec"].(map[string]interface{})
 		template := spec["template"].(map[string]interface{})
 		tSpec := template["spec"].(map[string]interface{})
-		initContainers := tSpec["initContainers"].([]map[string]interface{})
-		containers := tSpec["containers"].([]map[string]interface{})
-		Expect(containers[0]["name"]).To(Equal("migrations"))
-		Expect(initContainers[0]["restartPolicy"]).To(Equal("Always"))
+		initContainers := (tSpec["initContainers"].([]interface{}))
+		containers := tSpec["containers"].([]interface{})
+		initContainer := initContainers[0].(map[string]interface{})
+		container := containers[0].(map[string]interface{})
+		Expect(initContainer["restartPolicy"]).To(Equal("Always"))
+		Expect(container["name"]).To(Equal("migrations"))
 	})
 })

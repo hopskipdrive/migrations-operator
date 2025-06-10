@@ -210,9 +210,8 @@ func (comp *migrationsComponent) Reconcile(ctx *cu.Context) (cu.Result, error) {
 
 	// Purge any migration wait initContainers since that would be a yodawg situation.
 	initContainers := []map[string]interface{}{}
-	migrationInitContainers := migrationPodSpec["initContainers"].([]interface{})
-	if migrationInitContainers != nil {
-		for _, c := range migrationInitContainers {
+	if migrationPodSpec["initContainers"] != nil {
+		for _, c := range migrationPodSpec["initContainers"].([]interface{}) {
 			container := c.(map[string]interface{})
 			if !strings.HasPrefix(container["name"].(string), "migrate-wait-") {
 				initContainers = append(initContainers, container)
@@ -250,7 +249,7 @@ func (comp *migrationsComponent) Reconcile(ctx *cu.Context) (cu.Result, error) {
 	migrationJob.SetLabels(obj.Labels)
 	migrationJob.UnstructuredContent()["spec"] = map[string]interface{}{
 		"template": map[string]interface{}{
-			"meta": map[string]interface{}{
+			"metadata": map[string]interface{}{
 				"labels":      jobTemplateLabels,
 				"annotations": jobTemplateAnnotations,
 			},
@@ -346,7 +345,7 @@ func (_ *migrationsComponent) findOwners(ctx *cu.Context, obj *unstructured.Unst
 			break
 		}
 		gvk := schema.FromAPIVersionAndKind(ref.APIVersion, ref.Kind)
-		obj := &unstructured.Unstructured{}
+		obj = &unstructured.Unstructured{}
 		obj.SetGroupVersionKind(gvk)
 		obj.SetName(ref.Name) // Is this needed?
 		err := ctx.Client.Get(ctx, types.NamespacedName{Name: ref.Name, Namespace: namespace}, obj)
@@ -376,14 +375,14 @@ func (_ *migrationsComponent) findSpecFor(ctx *cu.Context, obj *unstructured.Uns
 		return template["spec"].(map[string]interface{})
 	case "argoproj.io/Rollout":
 		spec := obj.UnstructuredContent()["spec"].(map[string]interface{})
-		workloadRef := spec["workloadRef"].(map[string]interface{})
-		if workloadRef != nil {
+		if spec["workloadRef"] != nil {
+			workloadRef := spec["workloadRef"].(map[string]interface{})
 			workloadKind := workloadRef["kind"].(string)
 			if workloadKind == "Deployment" {
 				deployment := &unstructured.Unstructured{}
 				deployment.SetAPIVersion(workloadRef["apiVersion"].(string))
 				deployment.SetKind(workloadKind)
-				err := ctx.Client.Get(ctx, types.NamespacedName{Name: workloadRef["name"].(string), Namespace: obj.GetNamespace()}, obj)
+				err := ctx.Client.Get(ctx, types.NamespacedName{Name: workloadRef["name"].(string), Namespace: obj.GetNamespace()}, deployment)
 				if err != nil {
 					return nil
 				}
