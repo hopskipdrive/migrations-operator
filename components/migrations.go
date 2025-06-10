@@ -158,18 +158,19 @@ func (comp *migrationsComponent) Reconcile(ctx *cu.Context) (cu.Result, error) {
 	}
 
 	// Find the template container.
-	templatePodSpecContainers := templatePodSpec["containers"].([]map[string]interface{})
+	templatePodSpecContainers := templatePodSpec["containers"].([]interface{})
 	var templateContainer map[string]interface{}
 	if obj.Spec.Container != "" {
 		// Looking for a specific container name.
 		for _, c := range templatePodSpecContainers {
-			if c["name"].(string) == obj.Spec.Container {
-				templateContainer = c
+			container := c.(map[string]interface{})
+			if container["name"].(string) == obj.Spec.Container {
+				templateContainer = container
 				break
 			}
 		}
 	} else if len(templatePodSpecContainers) > 0 {
-		templateContainer = templatePodSpecContainers[0]
+		templateContainer = templatePodSpecContainers[0].(map[string]interface{})
 	}
 	if templateContainer == nil {
 		// Welp, either nothing matched the name or somehow there are no containers.
@@ -209,9 +210,10 @@ func (comp *migrationsComponent) Reconcile(ctx *cu.Context) (cu.Result, error) {
 
 	// Purge any migration wait initContainers since that would be a yodawg situation.
 	initContainers := []map[string]interface{}{}
-	for _, c := range migrationPodSpec["initContainers"].([]map[string]interface{}) {
-		if !strings.HasPrefix(c["name"].(string), "migrate-wait-") {
-			initContainers = append(initContainers, c)
+	for _, c := range migrationPodSpec["initContainers"].([]interface{}) {
+		container := c.(map[string]interface{})
+		if !strings.HasPrefix(container["name"].(string), "migrate-wait-") {
+			initContainers = append(initContainers, container)
 		}
 	}
 	migrationPodSpec["initContainers"] = initContainers
