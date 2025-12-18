@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.20 AS builder
+FROM golang:1.24 AS builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -21,8 +21,8 @@ COPY http/ http/
 COPY stubs/ stubs/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -tags release -o manager main.go
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -tags release -o waiter cmd/waiter/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GO111MODULE=on go build -a -tags release -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GO111MODULE=on go build -a -tags release -o waiter cmd/waiter/main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
