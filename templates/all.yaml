@@ -514,6 +514,10 @@ spec:
         ports:
         - containerPort: 8443
           name: https
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       terminationGracePeriodSeconds: 10
       volumes:
       - name: cert

@@ -4,3 +4,19 @@ resources:
   requests:
     cpu: 100m
     memory: 256M
+
+# The manager image is only published for arm64. Required so it never
+# schedules onto an amd64 node in a mixed-arch cluster (e.g. internal-auto's
+# gitlab-runner-amd64 pool). Override, or set to `null` to disable, per-env
+# in infra-monorepo helmfile values if a cluster's node pools differ.
+# (Helm deep-merges values, so `affinity: {}` will NOT clear this default —
+# use `affinity: null`.)
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/arch
+              operator: In
+              values:
+                - arm64
