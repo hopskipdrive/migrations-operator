@@ -499,11 +499,7 @@ spec:
           name: webhook-server
           protocol: TCP
         resources:
-          limits:
-            memory: 256M
-          requests:
-            cpu: 100m
-            memory: 128M
+          {{- toYaml .Values.resources | nindent 10 }}
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
