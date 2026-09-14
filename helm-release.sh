@@ -1,6 +1,6 @@
 #!/bin/bash
 
 helm package .
-helm push migrations-operator-0.0.3.tgz oci://471112736248.dkr.ecr.us-east-2.amazonaws.com
+helm push migrations-operator-0.0.4.tgz oci://471112736248.dkr.ecr.us-east-2.amazonaws.com
 
 exit 0;
