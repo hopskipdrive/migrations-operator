@@ -4,3 +4,9 @@ resources:
   requests:
     cpu: 100m
     memory: 256M
+
+# The manager image is only published for arm64, so pin scheduling to
+# arm64 nodes. Override per-env in infra-monorepo if a cluster's node
+# pools differ.
+nodeSelector:
+  kubernetes.io/arch: arm64

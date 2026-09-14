@@ -514,6 +514,8 @@ spec:
         ports:
         - containerPort: 8443
           name: https
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
       terminationGracePeriodSeconds: 10
       volumes:
       - name: cert
