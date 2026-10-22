@@ -26,7 +26,15 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GO111MODULE=on go build -a -tags relea
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static:nonroot AS runtime-base
+
+FROM 564365460806.dkr.ecr.us-east-2.amazonaws.com/docker-hub/library/python:3.13.7-slim AS certificates
+COPY --from=runtime-base /etc/ssl/certs/ca-certificates.crt /tmp/original.crt
+COPY filter_ca_bundle.py /tmp/filter_ca_bundle.py
+RUN python3 /tmp/filter_ca_bundle.py /tmp/original.crt /tmp/ca-certificates.crt
+
+FROM runtime-base
+COPY --from=certificates /tmp/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 WORKDIR /
 COPY --from=builder /workspace/manager /workspace/waiter ./
 USER nonroot:nonroot
