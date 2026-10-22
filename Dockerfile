@@ -8,6 +8,10 @@ COPY go.sum go.sum
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download
+# controller-utils initializes two base64 encodings with duplicate symbols, which Go 1.24 rejects.
+RUN sed -i 's/abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijkl/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_/' \
+    /go/pkg/mod/github.com/coderanger/controller-utils@v0.0.0-20230810025233-8343320aaff8/randstring/randstring.go \
+    /go/pkg/mod/github.com/coderanger/controller-utils@v0.0.0-20230810025233-8343320aaff8/components/random_secret.go
 
 # Copy the go source
 COPY main.go main.go
